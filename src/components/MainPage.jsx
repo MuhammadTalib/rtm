@@ -1,16 +1,63 @@
 import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
+import { slideInRight, slideOutRight } from "react-animations";
 import { connect, Provider } from "react-redux";
 import NavbarTop from "./MainPageContent/NavbarTop";
 import NavbarLeft from "./LeftNavbar/NavbarLeft";
 import MainPageContent from "./MainPageContent/MainPageContent";
+import RightNavbar from "./RightNavbar/RightNavbar";
+import axios from "axios";
+import ExpandedRightNavbar from "./RightNavbar/ExpandedRightNavbar";
 
 const MainPage = props => {
   const [barClicked, setbarClicked] = useState(0);
   const [marginLeft, setmarginLeft] = useState("3.9rem");
   const [hover, changehover] = useState(false);
   const [navwidth, setnavwidth] = useState("4.0rem");
+  const [userData, setUserData] = useState({ Users: [], status: false });
+  const [Expand_RightNavbar, set_Expand_RightNavbar] = useState(false);
+  const [z, sz] = useState(-1);
 
-  useEffect(() => {}, []);
+  const SlideIn = styled.div`
+    animation: 0.099s ${keyframes`${slideInRight}`};
+  `;
+  const SlideOut = styled.div`
+    animation: 1s ${keyframes`${slideOutRight}`};
+  `;
+
+  useEffect(() => {
+    const fetch = () => {
+      var data = {
+        IsChatPanel: true,
+        SelectParams:
+          "FirstName MiddleName LastName EmployeeID EmailIDs _id Vehicle",
+        SiteID: "5ca1fdd5e7179a0e4090502a",
+        isActiveUsers: true
+      };
+      var headers = {
+        "Content-Type": "application/json",
+        Authorization:
+          props.users.token === ""
+            ? "Bearer " + localStorage.getItem("token")
+            : "Bearer " + props.users.token
+      };
+      if (userData.status === false)
+        axios
+          .post("http://rtm2.innovativeanglez.com/api/User/getUsers", data, {
+            headers: headers
+          })
+          .then(res => {
+            setUserData(res.data);
+          })
+          .catch(err => {
+            console.log("error    ", err.message);
+          })
+          .finally(() => {
+            //loader[1](false);
+          });
+    };
+    fetch();
+  });
   const hoverHandler = () => {
     if (!barClicked) {
       if (!hover) {
@@ -38,8 +85,16 @@ const MainPage = props => {
       props.onUpdateUser(data);
     }
   };
+  const clickHandler = () => {
+    set_Expand_RightNavbar(true);
+    sz(5);
+  };
+  const rncancelHanldler = () => {
+    set_Expand_RightNavbar(false);
+    sz(-1);
+  };
   return (
-    <div>
+    <div style={{ zIndex: "1" }}>
       {props.users.status
         ? (localStorage.setItem("_id", props.users._id),
           localStorage.setItem("FirstName", props.users.FirstName),
@@ -49,10 +104,8 @@ const MainPage = props => {
           localStorage.setItem("LoginID", props.users.LoginID),
           localStorage.getItem("Sites", props.users.Sites),
           localStorage.getItem("status", props.users.status),
-          localStorage.setItem("token", props.users.token),
-          console.log("Data Saved in local Storage", props.users))
-        : (console.log("Data Fetched from local Storage", props.users),
-          update({
+          localStorage.setItem("token", props.users.token))
+        : update({
             _id: localStorage.getItem("_id"),
             FirstName: localStorage.getItem("FirstName"),
             MiddleName: localStorage.getItem("MiddleName"),
@@ -62,7 +115,7 @@ const MainPage = props => {
             Sites: localStorage.getItem("Sites"),
             LoginID: localStorage.getItem("LoginID"),
             token: localStorage.getItem("token")
-          }))}
+          })}
       }
       <NavbarTop marginLeft={marginLeft} />
       <NavbarLeft
@@ -72,6 +125,26 @@ const MainPage = props => {
         hover={hover}
         navwidth={navwidth}
       />
+      <RightNavbar data={userData} onClick={clickHandler} />
+      {Expand_RightNavbar ? (
+        <div>
+          <SlideIn>
+            <ExpandedRightNavbar
+              data={userData}
+              cancel={rncancelHanldler}
+              z={z}
+            />
+          </SlideIn>
+        </div>
+      ) : (
+        <SlideOut>
+          <ExpandedRightNavbar
+            data={userData}
+            cancel={rncancelHanldler}
+            z={z}
+          />
+        </SlideOut>
+      )}
       <Provider store={props.store}>
         <MainPageContent marginLeft={marginLeft} />
       </Provider>

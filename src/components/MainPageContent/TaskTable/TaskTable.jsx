@@ -16,7 +16,6 @@ const TaskTable = props => {
         className="table table-bordered tasktable mat-elevation-z8"
         style={{}}
       >
-        {console.log(props.data[0])}
         <thead>
           <tr>
             <th>Client</th>

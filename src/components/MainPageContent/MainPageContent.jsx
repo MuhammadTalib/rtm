@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-
 import axios from "axios";
 import { Container, Row } from "reactstrap";
 import MyCard from "./Card";
@@ -102,7 +101,6 @@ const MainPageContent = props => {
 
   const fetchClientData = (skipper, activePaging) => {
     activePaging === "Client" ? setskip(skipper) : setskipTask(skipper);
-    console.log("skipper", skipper);
     var data2 = {
       OrganizationName: null,
       SiteID: "5ca1fdd5e7179a0e4090502a",
@@ -123,18 +121,18 @@ const MainPageContent = props => {
         { headers: headers2 }
       )
       .then(res => {
-        console.log("res data of fetch client ", res.data);
         setClientdata(res.data);
       })
       .catch(err => {
         console.log("error    ", err.message);
+
+        loader[1](false);
       })
       .finally(() => {
         loader[1](false);
       });
   };
   useEffect(() => {
-    console.log(date, month, year);
     var data = {
       SelectedUserIDs: [],
       SiteID: "5ca1fdd5e7179a0e4090502a",
@@ -145,23 +143,25 @@ const MainPageContent = props => {
       "Content-Type": "application/json",
       Authorization: "Bearer " + props.users.token
     };
-    loader[1](true);
-    axios
-      .post(
-        "http://rtm2.innovativeanglez.com/api/Task/getTicketsTargetsCount",
-        data,
-        { headers: headers }
-      )
-      .then(res => {
-        console.log("res data ", res.data);
-        setTicketsdata(res.data);
-      })
-      .catch(err => {
-        console.log("error    ", err.message);
-      })
-      .finally(() => {
-        loader[1](false);
-      });
+    if (Ticketsdata.status === false) {
+      loader[1](true);
+      axios
+        .post(
+          "http://rtm2.innovativeanglez.com/api/Task/getTicketsTargetsCount",
+          data,
+          { headers: headers }
+        )
+        .then(res => {
+          setTicketsdata(res.data);
+        })
+        .catch(err => {
+          console.log("error    ", err.message);
+          loader[1](false);
+        })
+        .finally(() => {
+          loader[1](false);
+        });
+    }
     var data1 = {
       Category: "Task",
       SelectedUserIDs: [],
@@ -174,26 +174,29 @@ const MainPageContent = props => {
       "Content-Type": "application/json",
       Authorization: "Bearer " + props.users.token
     };
-    loader[1](true);
-    console.log("fetching aggregated task");
-    axios
-      .post(
-        "http://rtm2.innovativeanglez.com/api/Task/getAggregated_Task_OutComes_Count",
-        data1,
-        { headers: headers1 }
-      )
-      .then(res => {
-        console.log("res data ", res.data);
-        setaggregatedData(res.data);
-      })
-      .catch(err => {
-        console.log("error    ", err.message);
-      })
-      .finally(() => {
-        loader[1](false);
-      });
-    fetchClientData(0, "Both");
-  }, []);
+
+    if (aggregatedData.status === false) {
+      loader[1](true);
+      axios
+        .post(
+          "http://rtm2.innovativeanglez.com/api/Task/getAggregated_Task_OutComes_Count",
+          data1,
+          { headers: headers1 }
+        )
+        .then(res => {
+          setaggregatedData(res.data);
+        })
+        .catch(err => {
+          console.log("error    ", err.message);
+
+          loader[1](false);
+        })
+        .finally(() => {
+          loader[1](false);
+        });
+    }
+    if (ClientData.status === false) fetchClientData(0, "Both");
+  });
   return (
     <div>
       {loader[0] ? <Loader /> : <div />}
@@ -213,94 +216,85 @@ const MainPageContent = props => {
             paddingRight: "2rem"
           }}
         >
-          {Ticketsdata.status ? (
-            <Row>
-              <MyCard
-                head="Today"
-                value={Ticketsdata.DueTask}
-                name="DUE TASKS"
-                val_color="#039be5"
-                data={props.users}
-                bottomContent={[
-                  {
-                    title: "Completed",
-                    value: Ticketsdata.CompleteTask,
-                    down: "false"
-                  }
-                ]}
-              />
-              <MyCard
-                head="Overdue"
-                value={Ticketsdata.OverDueTask}
-                name="TASKS"
-                data={props.users}
-                url="http://rtm2.innovativeanglez.com/api/Task/getTicketsTargetsCount"
-                val_color="#f44336"
-                bottomContent={[
-                  {
-                    title: "Yesterday's overdue",
-                    value: Ticketsdata.PreviousOverDueTask,
-                    down: "false"
-                  }
-                ]}
-              />
-              <MyCard
-                head="Tickets"
-                value={Ticketsdata.ticketCounts}
-                name="OPEN"
-                data={props.users}
-                items={[Ticketsdata.DueTask, Ticketsdata.CompleteTask]}
-                url="http://rtm2.innovativeanglez.com/api/Task/getTicketsTargetsCount"
-                val_color="#ff9800"
-                clickHandler={verificationPending}
-                bottomContent={[
-                  {
-                    title: "ClosedToday",
-                    value: Ticketsdata.ticketsClosed,
-                    down: "false"
-                  },
-                  {
-                    title: "Verification Pending",
-                    value: Ticketsdata.ticketsVerificationPendingCounts,
-                    down: "true"
-                  }
-                ]}
-              />
-              <Targets
-                head="Targets"
-                targets={Ticketsdata.targetCounts}
-                value="55"
-                name="TASKS"
-                val_color="#f44336"
-                bottomContent={[
-                  {
-                    title: "Verification Pending",
-                    value: Ticketsdata.targetsVerificationPendingCounts,
-                    down: "true"
-                  },
-                  { title: "View All Targets", value: " ", down: "true" }
-                ]}
-              />
-              {aggregatedData.status ? (
-                <TaskDistribution data={aggregatedData} />
-              ) : (
-                <div />
-              )}
-              {ClientData.status ? (
-                <ScheduleCard
-                  data={ClientData}
-                  skip={skip}
-                  skipTask={skipTask}
-                  skipBackward={skipBackward}
-                  skipForward={skipForward}
-                />
-              ) : (
-                <div />
-              )}
-            </Row>
-          ) : (
-            <div />
-          )}
+          {/* {Ticketsdata.status ? ( */}
+          <Row>
+            <MyCard
+              head="Today"
+              value={Ticketsdata.DueTask}
+              name="DUE TASKS"
+              val_color="#039be5"
+              data={props.users}
+              bottomContent={[
+                {
+                  title: "Completed",
+                  value: Ticketsdata.CompleteTask,
+                  down: "false"
+                }
+              ]}
+            />
+            <MyCard
+              head="Overdue"
+              value={Ticketsdata.OverDueTask}
+              name="TASKS"
+              data={props.users}
+              url="http://rtm2.innovativeanglez.com/api/Task/getTicketsTargetsCount"
+              val_color="#f44336"
+              bottomContent={[
+                {
+                  title: "Yesterday's overdue",
+                  value: Ticketsdata.PreviousOverDueTask,
+                  down: "false"
+                }
+              ]}
+            />
+            <MyCard
+              head="Tickets"
+              value={Ticketsdata.ticketCounts}
+              name="OPEN"
+              data={props.users}
+              items={[Ticketsdata.DueTask, Ticketsdata.CompleteTask]}
+              url="http://rtm2.innovativeanglez.com/api/Task/getTicketsTargetsCount"
+              val_color="#ff9800"
+              clickHandler={verificationPending}
+              bottomContent={[
+                {
+                  title: "ClosedToday",
+                  value: Ticketsdata.ticketsClosed,
+                  down: "false"
+                },
+                {
+                  title: "Verification Pending",
+                  value: Ticketsdata.ticketsVerificationPendingCounts,
+                  down: "true"
+                }
+              ]}
+            />
+            <Targets
+              head="Targets"
+              targets={Ticketsdata.targetCounts}
+              value="55"
+              name="TASKS"
+              val_color="#f44336"
+              bottomContent={[
+                {
+                  title: "Verification Pending",
+                  value: Ticketsdata.targetsVerificationPendingCounts,
+                  down: "true"
+                },
+                { title: "View All Targets", value: " ", down: "true" }
+              ]}
+            />
+
+            <TaskDistribution data={aggregatedData} />
+
+            <ScheduleCard
+              data={ClientData}
+              skip={skip}
+              skipTask={skipTask}
+              skipBackward={skipBackward}
+              skipForward={skipForward}
+            />
+          </Row>
         </Container>
       </div>
     </div>

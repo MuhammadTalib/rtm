@@ -34,25 +34,10 @@ const LoginBox = props => {
       .then(res => {
         props.onUpdateUser(res.data);
         setLoginStatus(res.data.status);
-        console.log("users after login", props.users);
       })
       .catch(err => {
         console.log("error    ", err);
       });
-    // if (loginId === "Talib")
-    //   if (password === "123456") redirect(true);
-    //   else {
-    //     setpassInc(true);
-    //     setInterval(() => {
-    //       setpassInc(false);
-    //     }, 2000);
-    //   }
-    // else {
-    //   setloginidreg(true);
-    //   setInterval(() => {
-    //     setloginidreg(false);
-    //   }, 2000);
-    // }
   };
   const eyeClicked = () => {
     showPassword === "password"
@@ -135,7 +120,6 @@ const LoginBox = props => {
       >
         Forgot Password?
       </div>
-      {/* {!loginStatus ? <div /> : <Toast content={errorMessage} />} */}
     </Card>
   );
 };

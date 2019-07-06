@@ -11,10 +11,6 @@ const TaskDistribution = props => {
         marginRight: "1rem"
       }}
     >
-      {console.log(
-        "aggregated data",
-        props.data.TaskOutComes[0].groupTitleWise
-      )}
       <div
         style={{
           marginTop: "1rem",

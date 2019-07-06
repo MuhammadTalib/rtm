@@ -18,4 +18,8 @@ const Reducer = (state = initialState, action) => {
     };
   } else return state;
 };
-export default Reducer;
+
+const intialUserState = {};
+const UsersReducer = (state = intialUserState, action) => {};
+
+export default (UsersReducer, Reducer);
